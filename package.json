@@ -1,4 +1,5 @@
 {
+  "name": "logseq-plugin-react-boilerplate",
   "private": true,
   "scripts": {
     "build": "turbo build",
@@ -14,6 +15,5 @@
     "prettier": "^3.2.5",
     "turbo": "^2.0.9"
   },
-  "packageManager": "pnpm@8.15.6",
-  "name": "with-vite"
+  "packageManager": "pnpm@8.15.6"
 }
