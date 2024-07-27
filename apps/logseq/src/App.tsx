@@ -1,22 +1,7 @@
 import "./App.css";
 import { useState } from "react";
-import { createDAVClient, DAVClient } from "tsdav";
 
 // TODO 获取今日最新的todo 然后写入到Calendar中
-
-async function connectDav() {
-  const client = new DAVClient({
-    serverUrl: "https://caldav.icloud.com",
-    credentials: {
-      username: import.meta.env.VITE_APPLE_USER_NAME,
-      password: import.meta.env.VITE_APPLE_PASSWORD,
-    },
-    authMethod: "Basic",
-    defaultAccountType: "caldav",
-  });
-
-  client.login();
-}
 
 const App = () => {
   console.log(import.meta.env.VITE_APPLE_USER_NAME);
@@ -36,7 +21,6 @@ const App = () => {
     `);
     setTodos(todos.map((todo) => todo[0]));
     console.log(todos);
-    connectDav();
   };
 
   const getBlock = async () => {
