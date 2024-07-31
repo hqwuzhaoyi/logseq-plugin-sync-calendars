@@ -2,12 +2,12 @@
   "name": "logseq-plugin-react-boilerplate",
   "private": true,
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev --summarize",
-    "lint": "turbo lint",
-    "release": "turbo release",
-    "build:plugin": "turbo build:plugin",
-    "build:web": "turbo build:web",
+    "build": "dotenv -- turbo build",
+    "dev": "dotenv -- turbo dev --summarize",
+    "lint": "dotenv -- turbo lint",
+    "release": "dotenv -- turbo release",
+    "build:plugin": "dotenv -- turbo build:plugin",
+    "build:web": "dotenv -- turbo build:web",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {

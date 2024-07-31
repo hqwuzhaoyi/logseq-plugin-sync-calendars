@@ -9,3 +9,8 @@ dist-ssr
 .cache
 server/dist
 public/dist
+
+.env*
+.flaskenv*
+!.env.project
+!.env.vault
