@@ -1,7 +1,7 @@
 {
   "name": "server",
   "scripts": {
-    "dev": "dotenvx run --env-file=.env.local -- tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.6.4",

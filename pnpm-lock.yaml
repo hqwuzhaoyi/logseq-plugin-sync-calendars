@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      dotenv-cli:
+        specifier: github:motdotla/dotenv-cli
+        version: https://codeload.github.com/motdotla/dotenv-cli/tar.gz/1480f6b162841926affb626910ba86138294f5ef
     devDependencies:
       eslint:
         specifier: ^8.57.0
@@ -1666,6 +1670,15 @@ packages:
   dot-prop@6.0.1:
     resolution: {integrity: sha512-tE7ztYzXHIeyvc7N+hR3oi7FIbf/NIjVP9hmAt3yMXzrQ072/fpjGLx2GxNxGxUl5V73MEqYzioOMoVhGMJ5cA==}
     engines: {node: '>=10'}
+
+  dotenv-cli@https://codeload.github.com/motdotla/dotenv-cli/tar.gz/1480f6b162841926affb626910ba86138294f5ef:
+    resolution: {tarball: https://codeload.github.com/motdotla/dotenv-cli/tar.gz/1480f6b162841926affb626910ba86138294f5ef}
+    version: 7.2.1
+    hasBin: true
+
+  dotenv-expand@10.0.0:
+    resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
+    engines: {node: '>=12'}
 
   dotenv@16.0.3:
     resolution: {integrity: sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==}
@@ -5494,6 +5507,15 @@ snapshots:
   dot-prop@6.0.1:
     dependencies:
       is-obj: 2.0.0
+
+  dotenv-cli@https://codeload.github.com/motdotla/dotenv-cli/tar.gz/1480f6b162841926affb626910ba86138294f5ef:
+    dependencies:
+      cross-spawn: 7.0.3
+      dotenv: 16.4.5
+      dotenv-expand: 10.0.0
+      minimist: 1.2.8
+
+  dotenv-expand@10.0.0: {}
 
   dotenv@16.0.3: {}
 
