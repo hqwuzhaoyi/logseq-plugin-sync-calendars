@@ -1,11 +1,19 @@
+import dayjs from "dayjs";
 import "./App.css";
 import { useState } from "react";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import { ofetch } from "ofetch";
 
-// TODO 获取今日最新的todo 然后写入到Calendar中
+dayjs.extend(customParseFormat);
 
 const App = () => {
   console.log(import.meta.env.VITE_APPLE_USER_NAME);
-  const [todos, setTodos] = useState([]);
+  const [todos, setTodos] = useState<
+    {
+      text: string;
+      scheduledTime: string;
+    }[]
+  >([]);
   const getTodayTodos = async () => {
     const today = new Date().toISOString().split("T")[0].replace(/-/g, "");
     const todos = await logseq.DB.datascriptQuery(`
@@ -19,13 +27,33 @@ const App = () => {
        [?p :block/journal-day ${today}]
        [?b :block/content ?content]]
     `);
-    setTodos(todos.map((todo) => todo[0]));
-    console.log(todos);
-  };
 
-  const getBlock = async () => {
-    const block = await logseq.Editor.getBlock("");
-    console.log(block);
+    const tasks = todos.map((task) => {
+      const content = task[0];
+      const text = content
+        .replace(/^TODO\s*/, "")
+        .replace(/SCHEDULED:.*$/, "")
+        .trim();
+      const scheduledMatch = content.match(/SCHEDULED:\s*<([^>]+)>/);
+      const scheduledTime = scheduledMatch
+        ? dayjs(scheduledMatch[1], "YYYY-MM-DD ddd HH:mm")
+            .toDate()
+            .toISOString()
+        : dayjs().toDate().toISOString();
+      return { text, scheduledTime };
+    });
+    setTodos(tasks);
+
+    console.log(todos);
+    try {
+      await ofetch("http://localhost:3000/calc", {
+        method: "POST",
+        body: { tasks },
+      });
+      console.log("Tasks successfully sent to backend for synchronization.");
+    } catch (error) {
+      console.error("Error sending tasks to backend:", error);
+    }
   };
 
   return (
@@ -39,6 +67,15 @@ const App = () => {
         <h2 className="text-2xl mt-6">
           Current Env: {import.meta.env.VITE_MODE}
         </h2>
+
+        <h2 className="text-2xl mt-6">Todos:</h2>
+        <ul>
+          {todos.map((todo, index) => (
+            <li key={index}>
+              {todo.text} {todo.scheduledTime}
+            </li>
+          ))}
+        </ul>
         <button
           className="mt-6 bg-white text-black px-4 py-2 rounded"
           onClick={getTodayTodos}
