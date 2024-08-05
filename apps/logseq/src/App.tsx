@@ -3,6 +3,7 @@ import "./App.css";
 import { useState } from "react";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { ofetch } from "ofetch";
+import { v4 as uuidv4 } from "uuid";
 
 dayjs.extend(customParseFormat);
 
@@ -40,7 +41,8 @@ const App = () => {
             .toDate()
             .toISOString()
         : dayjs().toDate().toISOString();
-      return { text, scheduledTime };
+      const uid = task[0].properties?.uid || uuidv4();
+      return { text, scheduledTime, uid };
     });
     setTodos(tasks);
 
@@ -54,6 +56,16 @@ const App = () => {
     } catch (error) {
       console.error("Error sending tasks to backend:", error);
     }
+
+    tasks.forEach(async (task) => {
+      const block = await logseq.Editor.getBlock(task.uid);
+      if (block) {
+        await logseq.Editor.updateBlock(
+          block.uuid,
+          `${block.content}\nuid:: ${task.uid}`
+        );
+      }
+    });
   };
 
   return (
