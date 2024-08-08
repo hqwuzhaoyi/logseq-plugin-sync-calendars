@@ -14,6 +14,7 @@ import { cors } from "hono/cors";
 interface LogeseqTodo {
   text: string;
   scheduledTime: string;
+  uid: string;
 }
 
 config();
@@ -55,62 +56,82 @@ async function connectDav(logeseqTodos: LogeseqTodo[]) {
   if (!targetCalendar) {
     return;
   }
+  for (const todo of logeseqTodos) {
+    const events = [
+      {
+        start: dayjs(todo.scheduledTime, "YYYY-MM-DD ddd HH:mm").toDate(),
+        end: dayjs(todo.scheduledTime, "YYYY-MM-DD ddd HH:mm")
+          .add(1, "hour")
+          .toDate(),
+        summary: todo.text,
+        description: todo.text,
+        uid: todo.uid,
+      },
+    ];
 
-  const events = logeseqTodos.map((todo) => ({
-    start: dayjs(todo.scheduledTime, "YYYY-MM-DD ddd HH:mm")
-      .startOf("day")
-      .toDate(),
-    end: dayjs(todo.scheduledTime, "YYYY-MM-DD ddd HH:mm")
-      .endOf("day")
-      .toDate(),
-    summary: todo.text,
-    description: todo.text,
-  }));
+    const eventICal = ical({ events });
+    const eventICalData = eventICal.toString();
+    const filename = `task-${todo.uid}.ics`; // 使用UID作为文件名的一部分
 
-  const eventICal = ical({ events });
-  const eventICalData = eventICal.toString();
-  const filename = `task-${today}.ics`;
-  try {
     const eventResponse = await client.fetchCalendarObjects({
       calendar: targetCalendar,
-      timeRange: {
-        start: events[0].start.toISOString(),
-        end: events[0].end.toISOString(),
-      },
+      filters: [
+        {
+          type: "comp-filter",
+          attributes: { name: "VCALENDAR" },
+          children: [
+            {
+              type: "comp-filter",
+              attributes: { name: "VEVENT" },
+              children: [
+                {
+                  type: "prop-filter",
+                  attributes: { name: "UID" },
+                  children: [
+                    {
+                      type: "text-match",
+                      value: todo.uid,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
 
     if (eventResponse.length > 0) {
       console.log(`Updating event: ${filename}`);
-      await updateEvent(filename, eventResponse, eventICalData);
+      await updateEvent(
+        eventResponse[0].url,
+        targetCalendar,
+        eventICalData,
+        eventResponse[0].etag
+      );
     } else {
       console.log(`Creating event: ${filename}`);
       await createEvent(filename, targetCalendar, eventICalData);
     }
-  } catch (error) {
-    console.error("Error fetching calendar objects:", error);
   }
 }
 
 const updateEvent = async (
-  filename: string,
-  eventResponse: DAVCalendar[],
-  eventICalData: string
+  url: string,
+  targetCalendar: DAVCalendar,
+  eventICalData: string,
+  etag?: string
 ) => {
-  if (!eventResponse) {
-    return;
-  }
-
-  const targetCalendar = eventResponse.find((c) => c.url.includes(filename));
-
   if (!targetCalendar) {
     return;
   }
-  console.log("updateEvent", filename, targetCalendar, eventICalData);
+
   try {
-    const updateResponse = await client.updateCalendarObject({
+    const updateResponse = await updateCalendarObject({
       calendarObject: {
-        ...targetCalendar,
+        url: url,
         data: eventICalData,
+        etag: etag,
       },
     });
 

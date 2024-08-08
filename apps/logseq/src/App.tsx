@@ -7,65 +7,75 @@ import { v4 as uuidv4 } from "uuid";
 
 dayjs.extend(customParseFormat);
 
-const App = () => {
-  console.log(import.meta.env.VITE_APPLE_USER_NAME);
-  const [todos, setTodos] = useState<
-    {
-      text: string;
-      scheduledTime: string;
-    }[]
-  >([]);
-  const getTodayTodos = async () => {
-    const today = new Date().toISOString().split("T")[0].replace(/-/g, "");
-    const todos = await logseq.DB.datascriptQuery(`
-      [:find ?content
+const getTodayTodo = async () => {
+  const today = dayjs().format("YYYYMMDD");
+  const todo = await logseq.DB.datascriptQuery(`
+ [:find (pull ?b [*])
        :where
        (or
          [?b :block/marker "TODO"]
          [?b :block/marker "SCHEDULED"])
        [?b :block/page ?p]
        [?p :block/journal? true]
-       [?p :block/journal-day ${today}]
-       [?b :block/content ?content]]
-    `);
+       [?p :block/journal-day ${today}]]
+  `);
+  return todo;
+};
 
-    const tasks = todos.map((task) => {
-      const content = task[0];
-      const text = content
-        .replace(/^TODO\s*/, "")
-        .replace(/SCHEDULED:.*$/, "")
-        .trim();
-      const scheduledMatch = content.match(/SCHEDULED:\s*<([^>]+)>/);
-      const scheduledTime = scheduledMatch
-        ? dayjs(scheduledMatch[1], "YYYY-MM-DD ddd HH:mm")
-            .toDate()
-            .toISOString()
-        : dayjs().toDate().toISOString();
-      const uid = task[0].properties?.uid || uuidv4();
-      return { text, scheduledTime, uid };
-    });
-    setTodos(tasks);
+const mapTodo = async (todo) => {
+  const content = todo[0];
+  const text = content
+    .replace(/^TODO\s*/, "")
+    .replace(/SCHEDULED:.*$/, "")
+    .trim();
+  const scheduledMatch = content.match(/SCHEDULED:\s*<([^>]+)>/);
+  const scheduledTime = scheduledMatch
+    ? dayjs(scheduledMatch[1], "YYYY-MM-DD ddd").toDate().toISOString()
+    : dayjs().toDate().toISOString();
+  const uid = todo[0].properties?.uid || uuidv4();
+  if (!todo[0].properties?.uid) {
+    const newContent = `${content}\nuid:: ${uid}`;
+    await logseq.Editor.updateBlock(todo[0].uuid, newContent);
+  }
 
-    console.log(todos);
+  return { text, scheduledTime, uid };
+};
+
+const App = () => {
+  console.log(import.meta.env.VITE_APPLE_USER_NAME);
+  const [todo, setTodo] = useState<
+    {
+      text: string;
+      scheduledTime: string;
+    }[]
+  >([]);
+
+  const handleGetTodo = async () => {
+    const todo = await getTodayTodo();
+    const tasks = todo.map(mapTodo);
+    const resolvedTasks = await Promise.all(tasks);
+    setTodo(resolvedTasks);
+  }
+
+  const handleSyncTodo = async () => {
+    const todo = await getTodayTodo();
+
+    const tasks = todo.map(mapTodo);
+
+    const resolvedTasks = await Promise.all(tasks);
+    setTodo(resolvedTasks);
+
+    console.log(resolvedTasks);
+
     try {
       await ofetch("http://localhost:3000/calc", {
         method: "POST",
-        body: { tasks },
+        body: { tasks: resolvedTasks },
       });
       console.log("Tasks successfully sent to backend for synchronization.");
     } catch (error) {
       console.error("Error sending tasks to backend:", error);
     }
-
-    tasks.forEach(async (task) => {
-      const block = await logseq.Editor.getBlock(task.uid);
-      if (block) {
-        await logseq.Editor.updateBlock(
-          block.uuid,
-          `${block.content}\nuid:: ${task.uid}`
-        );
-      }
-    });
   };
 
   return (
@@ -82,17 +92,24 @@ const App = () => {
 
         <h2 className="text-2xl mt-6">Todos:</h2>
         <ul>
-          {todos.map((todo, index) => (
+          {todo.map((todo, index) => (
             <li key={index}>
               {todo.text} {todo.scheduledTime}
             </li>
           ))}
         </ul>
+
         <button
           className="mt-6 bg-white text-black px-4 py-2 rounded"
-          onClick={getTodayTodos}
+          onClick={handleGetTodo}
         >
-          Get Block
+          Get Todo
+        </button>
+        <button
+          className="mt-6 bg-white text-black px-4 py-2 rounded"
+          onClick={handleSyncTodo}
+        >
+          Sync
         </button>
       </div>
     </div>
