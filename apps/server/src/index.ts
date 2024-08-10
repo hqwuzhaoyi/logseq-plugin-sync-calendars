@@ -1,12 +1,7 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { config } from "dotenv";
-import {
-  createDAVClient,
-  DAVCalendar,
-  DAVClient,
-  updateCalendarObject,
-} from "tsdav";
+import { DAVCalendar, DAVCalendarObject, DAVClient } from "tsdav";
 import ical from "ical-generator";
 import dayjs from "dayjs";
 import { cors } from "hono/cors";
@@ -15,7 +10,11 @@ interface LogeseqTodo {
   text: string;
   scheduledTime: string;
   uid: string;
+  isAllDay: boolean;
 }
+
+let isLogin = false;
+let calendar: DAVCalendar | undefined;
 
 config();
 const app = new Hono();
@@ -42,30 +41,51 @@ async function connectDav(logeseqTodos: LogeseqTodo[]) {
     password: process.env.VITE_APPLE_USER_PASSWORD,
   });
 
-  try {
-    await login;
-  } catch (error) {
-    console.error("Error logging", error);
+  if (!isLogin) {
+    try {
+      await login;
+      isLogin = true;
+    } catch (error) {
+      console.error("Error logging", error);
+    }
   }
 
-  const calendars = await client.fetchCalendars();
-  const targetCalendar = calendars.find((c) => c.displayName === "工作");
+  if (!calendar) {
+    try {
+      const calendars = await client.fetchCalendars();
+      calendar = calendars.find((c) => c.displayName === "logseq");
 
-  console.log("targetCalendar", targetCalendar);
+      console.log("calendar", calendar);
+    } catch (error) {
+      console.error("Error fetching calendars", error);
+    }
 
-  if (!targetCalendar) {
-    return;
+    if (!calendar) {
+      console.error("No calendar found with the name 'logseq'");
+      return;
+    }
   }
+
   for (const todo of logeseqTodos) {
+    let startTime, endTime;
+    if (!todo.isAllDay) {
+      // 如果有时间信息，设置具体的时间段
+      startTime = dayjs(todo.scheduledTime).toDate();
+      endTime = dayjs(todo.scheduledTime).add(1, "hour").toDate(); // 默认1小时的事件
+    } else {
+      // 如果没有时间信息，设置为全天事件
+      startTime = dayjs(todo.scheduledTime).startOf("day").toDate();
+      endTime = dayjs(todo.scheduledTime).endOf("day").toDate();
+    }
+
     const events = [
       {
-        start: dayjs(todo.scheduledTime, "YYYY-MM-DD ddd HH:mm").toDate(),
-        end: dayjs(todo.scheduledTime, "YYYY-MM-DD ddd HH:mm")
-          .add(1, "hour")
-          .toDate(),
+        start: startTime,
+        end: endTime,
         summary: todo.text,
         description: todo.text,
         uid: todo.uid,
+        allDay: todo.isAllDay,
       },
     ];
 
@@ -73,76 +93,41 @@ async function connectDav(logeseqTodos: LogeseqTodo[]) {
     const eventICalData = eventICal.toString();
     const filename = `task-${todo.uid}.ics`; // 使用UID作为文件名的一部分
 
+    const eventUrl = `${calendar.url}${filename}`;
+
     const eventResponse = await client.fetchCalendarObjects({
-      calendar: targetCalendar,
-      filters: [
-        {
-          type: "comp-filter",
-          attributes: { name: "VCALENDAR" },
-          children: [
-            {
-              type: "comp-filter",
-              attributes: { name: "VEVENT" },
-              children: [
-                {
-                  type: "prop-filter",
-                  attributes: { name: "UID" },
-                  children: [
-                    {
-                      type: "text-match",
-                      value: todo.uid,
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
+      objectUrls: [eventUrl],
+      calendar: calendar,
     });
 
     if (eventResponse.length > 0) {
+      const object = eventResponse[0];
       console.log(`Updating event: ${filename}`);
-      await updateEvent(
-        eventResponse[0].url,
-        targetCalendar,
-        eventICalData,
-        eventResponse[0].etag
-      );
+      await updateEvent({
+        ...object,
+        data: eventICalData,
+      });
     } else {
       console.log(`Creating event: ${filename}`);
-      await createEvent(filename, targetCalendar, eventICalData);
+      await createEvent(filename, calendar, eventICalData);
     }
   }
 }
 
-const updateEvent = async (
-  url: string,
-  targetCalendar: DAVCalendar,
-  eventICalData: string,
-  etag?: string
-) => {
-  if (!targetCalendar) {
+const updateEvent = async (calendarObject: DAVCalendarObject) => {
+  if (!calendar) {
     return;
   }
 
   try {
-    const updateResponse = await updateCalendarObject({
-      calendarObject: {
-        url: url,
-        data: eventICalData,
-        etag: etag,
-      },
+    const updateResponse = await client.updateCalendarObject({
+      calendarObject,
     });
 
     if (updateResponse.ok) {
       console.log("Event successfully updated.");
     } else {
-      console.error(
-        "Error updating event:",
-        updateResponse.status,
-        updateResponse.statusText
-      );
+      throw new Error(updateResponse.status + updateResponse.statusText);
     }
   } catch (error) {
     console.error("Error updating event:", error);
@@ -151,29 +136,26 @@ const updateEvent = async (
 
 const createEvent = async (
   filename: string,
-  targetCalendar: DAVCalendar,
+  calendar: DAVCalendar,
   eventICalData: string
 ) => {
-  if (!targetCalendar) {
+  if (!calendar) {
     return;
   }
+  try {
+    const createResponse = await client.createCalendarObject({
+      calendar: calendar,
+      filename: filename,
+      iCalString: eventICalData,
+    });
 
-  await login;
-
-  const createResponse = await client.createCalendarObject({
-    calendar: targetCalendar,
-    filename: filename,
-    iCalString: eventICalData,
-  });
-
-  if (createResponse.ok) {
-    console.log("Event successfully created.");
-  } else {
-    console.error(
-      "Error creating event:",
-      createResponse.status,
-      createResponse.statusText
-    );
+    if (createResponse.ok) {
+      console.log("Event successfully created.");
+    } else {
+      throw new Error(createResponse.status + createResponse.statusText);
+    }
+  } catch (error) {
+    console.error("Error creating event:", error);
   }
 };
 

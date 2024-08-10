@@ -3,12 +3,12 @@ import "./App.css";
 import { useState } from "react";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { ofetch } from "ofetch";
-import { v4 as uuidv4 } from "uuid";
 
 dayjs.extend(customParseFormat);
 
 const getTodayTodo = async () => {
   const today = dayjs().format("YYYYMMDD");
+  // TODO: shceduledTime 标签不正确
   const todo = await logseq.DB.datascriptQuery(`
  [:find (pull ?b [*])
        :where
@@ -23,22 +23,48 @@ const getTodayTodo = async () => {
 };
 
 const mapTodo = async (todo) => {
-  const content = todo[0];
+  const block = todo[0]; // 获取第一个块对象
+  const content = block.content; // 获取块的内容
   const text = content
     .replace(/^TODO\s*/, "")
     .replace(/SCHEDULED:.*$/, "")
     .trim();
+
   const scheduledMatch = content.match(/SCHEDULED:\s*<([^>]+)>/);
-  const scheduledTime = scheduledMatch
-    ? dayjs(scheduledMatch[1], "YYYY-MM-DD ddd").toDate().toISOString()
-    : dayjs().toDate().toISOString();
-  const uid = todo[0].properties?.uid || uuidv4();
-  if (!todo[0].properties?.uid) {
-    const newContent = `${content}\nuid:: ${uid}`;
-    await logseq.Editor.updateBlock(todo[0].uuid, newContent);
+  let scheduledTimeText;
+  let isAllDay = false;
+  let scheduledTime;
+
+  if (scheduledMatch) {
+    const dateString = scheduledMatch[1];
+
+    if (dateString.length === 14) {
+      // 如果日期格式为 YYYYMMDD
+      scheduledTimeText = dayjs(dateString, "YYYY-MM-DD").format(
+        "YYYY-MM-DDTHH:mm:ss"
+      );
+      scheduledTime = dayjs(dateString, "YYYY-MM-DD").valueOf();
+      isAllDay = true; // 没有时间信息，则为全天事件
+    } else if (dateString.length > 14) {
+      // 如果日期格式包含时间
+      scheduledTimeText = dayjs(dateString, "YYYY-MM-DD HH:mm").format(
+        "YYYY-MM-DDTHH:mm:ss"
+      );
+      scheduledTime = dayjs(dateString, "YYYY-MM-DD HH:mm").valueOf();
+      isAllDay = scheduledTimeText.endsWith("00:00:00"); // 如果时间部分为00:00:00，则为全天事件
+    }
+  } else {
+    scheduledTimeText = dayjs().format("YYYY-MM-DDTHH:mm:ss");
+    scheduledTime = dayjs().valueOf();
   }
 
-  return { text, scheduledTime, uid };
+  return {
+    text,
+    scheduledTimeText,
+    uid: block.uuid,
+    isAllDay,
+    scheduledTime,
+  };
 };
 
 const App = () => {
@@ -47,6 +73,8 @@ const App = () => {
     {
       text: string;
       scheduledTime: string;
+      isAllDay: boolean;
+      scheduledTimeText: string;
     }[]
   >([]);
 
@@ -55,7 +83,7 @@ const App = () => {
     const tasks = todo.map(mapTodo);
     const resolvedTasks = await Promise.all(tasks);
     setTodo(resolvedTasks);
-  }
+  };
 
   const handleSyncTodo = async () => {
     const todo = await getTodayTodo();
@@ -94,7 +122,10 @@ const App = () => {
         <ul>
           {todo.map((todo, index) => (
             <li key={index}>
-              {todo.text} {todo.scheduledTime}
+              <div>text: {todo.text}</div>
+              <div>isAllDay: {todo.isAllDay ? "All Day" : ""}</div>
+              <div>scheduledTime: {todo.scheduledTime}</div>
+              <div>scheduledTimeText: {todo.scheduledTimeText}</div>
             </li>
           ))}
         </ul>
