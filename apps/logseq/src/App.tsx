@@ -107,16 +107,16 @@ const App = () => {
   };
 
   return (
-    <div className="w-screen h-screen flex items-center justify-center text-white">
+    <div className="w-screen h-screen flex items-center justify-center">
       <div
         className="w-screen h-screen fixed top-0 left-0"
         onClick={() => logseq.hideMainUI()}
       ></div>
-      <div className="w-5/6 h-5/6 z-0 bg-gradient-to-tr from-green-300 via-green-500 to-green-700 flex flex-col items-center justify-center">
-        <h1 className="font-bold text-4xl">Logseq-plugin-react-boilerplate</h1>
-        <h2 className="text-2xl mt-6">
+      <div className="absolute p-4 w-90 h-120 -left-13rem bg-white shadow rounded-lg overflow-y-auto scrollbar-hide border-2 transition-all transition-200">
+        <h1 className="font-bold text-4xl">Calendar Sync</h1>
+        {/* <h2 className="text-2xl mt-6">
           Current Env: {import.meta.env.VITE_MODE}
-        </h2>
+        </h2> */}
 
         <h2 className="text-2xl mt-6">Todos:</h2>
         <ul>
