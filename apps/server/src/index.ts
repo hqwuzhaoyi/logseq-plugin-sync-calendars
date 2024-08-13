@@ -4,7 +4,12 @@ import { config } from "dotenv";
 import { DAVCalendar, DAVCalendarObject, DAVClient } from "tsdav";
 import ical from "ical-generator";
 import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import utc from "dayjs/plugin/utc";
 import { cors } from "hono/cors";
+
+dayjs.extend(customParseFormat);
+dayjs.extend(utc);
 
 interface LogeseqTodo {
   text: string;
@@ -74,11 +79,14 @@ async function connectDav(logeseqTodos: LogeseqTodo[]) {
     for (const todo of logeseqTodos) {
       let startTime, endTime;
       if (!todo.isAllDay) {
-        startTime = dayjs(todo.scheduledTime).toDate();
-        endTime = dayjs(todo.scheduledTime).add(1, "hour").toDate(); // 默认1小时的事件
+        startTime = dayjs.utc(todo.scheduledTime).toDate();
+        endTime = dayjs.utc(todo.scheduledTime).add(1, "hour").toDate(); // 默认1小时的事件
       } else {
-        startTime = dayjs(todo.scheduledTime).startOf("day").toDate();
-        endTime = dayjs(todo.scheduledTime).endOf("day").toDate();
+        startTime = dayjs.utc(todo.scheduledTime + "", "YYYYMMDD").toDate();
+        endTime = dayjs
+          .utc(todo.scheduledTime + "", "YYYYMMDD")
+          .add(1, "day")
+          .toDate();
       }
 
       const events = [
@@ -96,23 +104,23 @@ async function connectDav(logeseqTodos: LogeseqTodo[]) {
       const eventICalData = eventICal.toString();
       const filename = `task-${todo.uid}.ics`;
 
-      const eventUrl = `${calendar.url}${filename}`;
-
       try {
         const eventResponse = await client.fetchCalendarObjects({
-          objectUrls: [eventUrl],
           calendar: calendar,
+          objectUrls: [filename],
         });
+
+        console.log(`eventResponse for UID ${todo.uid}:`, eventResponse);
 
         if (eventResponse.length > 0) {
           const object = eventResponse[0];
-          console.log(`Updating event: ${filename}`);
+          console.log(`Updating event with UID: ${todo.uid}`);
           await updateEvent({
             ...object,
             data: eventICalData,
           });
         } else {
-          console.log(`Creating event: ${filename}`);
+          console.log(`Creating event with UID: ${todo.uid}`);
           await createEvent(filename, calendar, eventICalData);
         }
       } catch (error) {
@@ -126,7 +134,7 @@ async function connectDav(logeseqTodos: LogeseqTodo[]) {
 
 const updateEvent = async (calendarObject: DAVCalendarObject) => {
   try {
-    if (calendarObject.etag === 'undefined') {
+    if (calendarObject.etag === "undefined") {
       delete calendarObject.etag;
     }
     const updateResponse = await client.updateCalendarObject({
