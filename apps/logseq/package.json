@@ -1,9 +1,9 @@
 {
   "name": "logseq",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "main": "dist/index.html",
   "logseq": {
-    "id": "logseq-plugin-react-boilerplate",
+    "id": "logseq-plugin-calendar-sync",
     "icon": "logo.png"
   },
   "scripts": {
@@ -19,6 +19,7 @@
     "ofetch": "^1.3.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "recoil": "^0.7.7",
     "tsdav": "^2.1.0",
     "uuid": "^10.0.0"
   },

@@ -43,7 +43,7 @@ const mapTodo = async (todo) => {
       scheduledTimeText = dayjs(dateString, "YYYY-MM-DD").format(
         "YYYY-MM-DDTHH:mm:ss"
       );
-      scheduledTime = dayjs(dateString, "YYYY-MM-DD").valueOf();
+      scheduledTime = block.scheduled
       isAllDay = true; // 没有时间信息，则为全天事件
     } else if (dateString.length > 14) {
       // 如果日期格式包含时间
