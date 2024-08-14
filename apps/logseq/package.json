@@ -11,7 +11,7 @@
     "build:plugin": "tsc && vite build --mode plugin",
     "build:web": "tsc && vite build --mode web",
     "preview": "vite preview",
-    "release": "npx semantic-release"
+    "release": "echo $GH_TOKEN && npx semantic-release"
   },
   "dependencies": {
     "@logseq/libs": "^0.0.17",

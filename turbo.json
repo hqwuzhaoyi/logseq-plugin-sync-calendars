@@ -57,6 +57,7 @@
       ]
     },
     "release": {
+      "env": ["GH_TOKEN"],
       "dependsOn": [
         "^build"
       ],
