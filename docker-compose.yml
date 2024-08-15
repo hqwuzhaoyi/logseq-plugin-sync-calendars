@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+  logseq-sync-calendars:
+    container_name: logseq-sync-calendars
+    build:
+      context: .
+      dockerfile: ./apps/server/Dockerfile
+    volumes:
+      - pnpm-store:/pnpm/store
+    ports:
+      - 3000:3000
+    networks:
+      - logseq-sync-calendars-network
+    env_file:
+      - .env
+    restart: unless-stopped
+
+networks:
+  logseq-sync-calendars-network:
+
+volumes:
+  pnpm-store:
