@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.0.0...v1.1.0) (2024-08-20)
+
+
+### Features
+
+* Add Dockerfile for server deployment ([9f7bd21](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/9f7bd2103b2161d5a7d8baac6e0275fdd447a34d))
+
 # 1.0.0 (2024-08-14)
 
 
