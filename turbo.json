@@ -2,6 +2,7 @@
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "build": {
+      "cache": false,
       "dependsOn": [
         "^build"
       ],
@@ -38,6 +39,24 @@
       ]
     },
     "lint": {},
+    "start": {
+      "cache": false,
+      "persistent": true,
+      "env": [
+        "NODE_ENV",
+        "VITE_ENV",
+        "VITE_APP_ENV",
+        "VITE_MODE",
+        "VITE_LOGSEQ_API_SERVER",
+        "VITE_LOGSEQ_API_TOKEN",
+        "VITE_APPLE_USER_NAME",
+        "VITE_APPLE_USER_PASSWORD"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true,

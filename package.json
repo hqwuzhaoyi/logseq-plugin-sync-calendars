@@ -4,6 +4,7 @@
   "scripts": {
     "build": "dotenv -- turbo build",
     "dev": "dotenv -- turbo dev --summarize",
+    "start": "dotenv -- turbo start",
     "lint": "dotenv -- turbo lint",
     "release": "dotenv -- turbo release",
     "build:plugin": "dotenv -- turbo build:plugin",
@@ -12,11 +13,13 @@
   },
   "devDependencies": {
     "eslint": "^8.57.0",
-    "prettier": "^3.2.5",
-    "turbo": "^2.0.9"
+    "prettier": "^3.2.5"
   },
   "packageManager": "pnpm@8.15.6",
   "dependencies": {
-    "dotenv-cli": "github:motdotla/dotenv-cli"
+    "dotenv": "^16.3.1",
+    "dotenv-cli": "^7.3.0",
+    "turbo": "^2.0.9",
+    "typescript": "^5.5.4"
   }
 }
