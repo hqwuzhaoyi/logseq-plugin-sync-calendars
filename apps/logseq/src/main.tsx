@@ -4,6 +4,8 @@ import proxyLogseq from "logseq-proxy";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import settings from "./settings";
+import { RecoilRoot } from "recoil";
 
 if (import.meta.env.VITE_MODE === "web") {
   // run in browser
@@ -25,7 +27,7 @@ if (import.meta.env.VITE_MODE === "web") {
   renderApp();
 } else {
   console.log("=== logseq-plugin-react-boilerplate loaded ===");
-  logseq.ready(() => {
+  logseq.useSettingsSchema(settings).ready(() => {
     logseq.provideModel({
       show() {
         renderApp();
@@ -45,7 +47,9 @@ function renderApp() {
   const root = createRoot(document.getElementById("root")!);
   root.render(
     <React.StrictMode>
-      <App />
+      <RecoilRoot>
+        <App />
+      </RecoilRoot>
     </React.StrictMode>
   );
 }

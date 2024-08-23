@@ -1,5 +1,5 @@
 {
-  "name": "logseq",
+  "name": "logseq-plugin-calendar-sync",
   "version": "1.1.0",
   "main": "dist/index.html",
   "logseq": {

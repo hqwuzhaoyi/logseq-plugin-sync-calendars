@@ -3,6 +3,8 @@ import "./App.css";
 import { useState } from "react";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { ofetch } from "ofetch";
+import { settingsState } from "./state/settings";
+import { useRecoilValue } from "recoil";
 
 dayjs.extend(customParseFormat);
 
@@ -43,7 +45,7 @@ const mapTodo = async (todo) => {
       scheduledTimeText = dayjs(dateString, "YYYY-MM-DD").format(
         "YYYY-MM-DDTHH:mm:ss"
       );
-      scheduledTime = block.scheduled
+      scheduledTime = block.scheduled;
       isAllDay = true; // 没有时间信息，则为全天事件
     } else if (dateString.length > 14) {
       // 如果日期格式包含时间
@@ -77,6 +79,9 @@ const App = () => {
       scheduledTimeText: string;
     }[]
   >([]);
+  const settings = useRecoilValue(settingsState);
+
+  console.log("settings", settings);
 
   const handleGetTodo = async () => {
     const todo = await getTodayTodo();
@@ -94,9 +99,13 @@ const App = () => {
     setTodo(resolvedTasks);
 
     console.log(resolvedTasks);
+    if(!settings.serverUrl) {
+      console.error("Server URL is not set.");
+      return;
+    }
 
     try {
-      await ofetch("http://localhost:3000/calc", {
+      await ofetch(settings.serverUrl + "/calc", {
         method: "POST",
         body: { tasks: resolvedTasks },
       });

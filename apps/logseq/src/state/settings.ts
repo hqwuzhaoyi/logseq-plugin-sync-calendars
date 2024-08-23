@@ -3,6 +3,7 @@ import { atom, AtomEffect } from "recoil";
 import settings from "../settings";
 
 interface IPluginSettings {
+  serverUrl: string;
   hotkey: string;
 //   defaultMarker: TaskMarker;
   customMarkers: string;
