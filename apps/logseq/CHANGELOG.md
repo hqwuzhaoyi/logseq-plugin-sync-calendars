@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.1.0...v1.2.0) (2024-08-23)
+
+
+### Features
+
+* Add serverUrl property to IPluginSettings interface ([70ba7f4](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/70ba7f4b0d287e15eed89545ee085673dbb5bcb5))
+
 # [1.1.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.0.0...v1.1.0) (2024-08-20)
 
 
