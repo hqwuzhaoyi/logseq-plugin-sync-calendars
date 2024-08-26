@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.2.0...v1.3.0) (2024-08-26)
+
+
+### Features
+
+* Init next app ([f8604cb](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/f8604cb73b7ec09f3a1818f2d9b9629e841c67f2))
+
 # [1.2.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.1.0...v1.2.0) (2024-08-23)
 
 
