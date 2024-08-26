@@ -9,7 +9,7 @@ services:
     volumes:
       - pnpm-store:/pnpm/store
     ports:
-      - 13000:3000
+      - 13010:3010
     networks:
       - logseq-sync-calendars-network
     env_file:

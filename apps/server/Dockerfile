@@ -23,5 +23,5 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 # COPY --from=build /app/apps/server/dist ./apps/server/dist
 COPY --from=base /app/out/full/ .
 COPY --from=base /app/out/pnpm-lock.yaml .
-EXPOSE 3000
+EXPOSE 3010
 CMD [ "pnpm", "start" ]

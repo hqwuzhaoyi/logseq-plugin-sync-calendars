@@ -194,7 +194,7 @@ app.post("/calc", async (c) => {
   return c.json({ message: "Tasks successfully synced" });
 });
 
-const port = 3000;
+const port = 3010;
 console.log(`Server is running on port ${port}`);
 
 serve({
