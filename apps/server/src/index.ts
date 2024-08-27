@@ -25,13 +25,13 @@ config();
 const app = new Hono();
 app.use("*", cors());
 
-console.log("process.env", process.env.VITE_APPLE_USER_NAME);
+console.log("process.env", process.env.APPLE_USER_NAME);
 
 const client = new DAVClient({
   serverUrl: "https://caldav.icloud.com",
   credentials: {
-    username: process.env.VITE_APPLE_USER_NAME,
-    password: process.env.VITE_APPLE_USER_PASSWORD,
+    username: process.env.APPLE_USER_NAME,
+    password: process.env.APPLE_USER_PASSWORD,
   },
   authMethod: "Basic",
   defaultAccountType: "caldav",

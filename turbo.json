@@ -49,8 +49,8 @@
         "VITE_MODE",
         "VITE_LOGSEQ_API_SERVER",
         "VITE_LOGSEQ_API_TOKEN",
-        "VITE_APPLE_USER_NAME",
-        "VITE_APPLE_USER_PASSWORD"
+        "APPLE_USER_NAME",
+        "APPLE_USER_PASSWORD"
       ],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -67,8 +67,8 @@
         "VITE_MODE",
         "VITE_LOGSEQ_API_SERVER",
         "VITE_LOGSEQ_API_TOKEN",
-        "VITE_APPLE_USER_NAME",
-        "VITE_APPLE_USER_PASSWORD"
+        "APPLE_USER_NAME",
+        "APPLE_USER_PASSWORD"
       ],
       "inputs": [
         "$TURBO_DEFAULT$",

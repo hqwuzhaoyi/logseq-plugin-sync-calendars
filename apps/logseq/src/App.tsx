@@ -70,7 +70,6 @@ const mapTodo = async (todo) => {
 };
 
 const App = () => {
-  console.log(import.meta.env.VITE_APPLE_USER_NAME);
   const [todo, setTodo] = useState<
     {
       text: string;
