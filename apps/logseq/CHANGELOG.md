@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.3.0...v1.4.0) (2024-08-27)
+
+
+### Features
+
+* Add CalDAV route for logging in and retrieving data ([a9c340e](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/a9c340e4df3d675d8fb52d5028baf12c23c638ce))
+
 # [1.3.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.2.0...v1.3.0) (2024-08-26)
 
 
