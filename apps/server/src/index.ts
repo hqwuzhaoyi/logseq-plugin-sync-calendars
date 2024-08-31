@@ -181,7 +181,7 @@ app.get("/", (c) => {
   return c.text("Hello Hono!");
 });
 
-app.post("/calc", async (c) => {
+app.post("/calendar", async (c) => {
   const logeseqTodos = await c.req.json<{
     tasks: LogeseqTodo[];
   }>();

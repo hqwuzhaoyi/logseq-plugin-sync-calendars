@@ -6,7 +6,7 @@ const settings: SettingSchemaDesc[] = [
     type: "string",
     title: "Server URL",
     description: "The URL of the server to sync with.",
-    default: "http://localhost:3000",
+    default: "http://localhost:3000/calendar",
   },
 ];
 

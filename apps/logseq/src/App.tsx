@@ -104,7 +104,7 @@ const App = () => {
     }
 
     try {
-      await ofetch(settings.serverUrl + "/calc", {
+      await ofetch(settings.serverUrl, {
         method: "POST",
         body: { tasks: resolvedTasks },
       });
