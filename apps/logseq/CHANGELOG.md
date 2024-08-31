@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.4.0...v1.5.0) (2024-08-31)
+
+
+### Features
+
+* Update server URL for calendar sync ([6aa7199](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/6aa7199330c1e358b3f4099bed26de6225f19de7))
+
 # [1.4.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.3.0...v1.4.0) (2024-08-27)
 
 
