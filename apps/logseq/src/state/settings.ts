@@ -5,9 +5,9 @@ import settings from "../settings";
 interface IPluginSettings {
   serverUrl: string;
   hotkey: string;
-//   defaultMarker: TaskMarker;
+  //   defaultMarker: TaskMarker;
   customMarkers: string;
-//   defaultPriority: TaskPriority;
+  //   defaultPriority: TaskPriority;
   showNextNDaysTask: boolean;
   numberOfNextNDays: number;
   lightPrimaryBackgroundColor: string;
@@ -21,10 +21,14 @@ interface IPluginSettings {
 
 const settingsChangedEffect: AtomEffect<IPluginSettings> = ({ setSelf }) => {
   setSelf({ ...logseq.settings } as unknown as IPluginSettings);
-  const unlisten = logseq.onSettingsChanged((newSettings) => {
-    setSelf(newSettings);
-  });
-  return () => unlisten();
+  if (typeof logseq.onSettingsChanged === "function") {
+    const unlisten = logseq.onSettingsChanged((newSettings) => {
+      setSelf(newSettings);
+    });
+    return () => unlisten();
+  } else {
+    console.warn("logseq.onSettingsChanged is not a function.");
+  }
 };
 
 export const settingsState = atom<IPluginSettings>({

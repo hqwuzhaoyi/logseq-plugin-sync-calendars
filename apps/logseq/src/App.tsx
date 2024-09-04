@@ -98,13 +98,19 @@ const App = () => {
     setTodo(resolvedTasks);
 
     console.log(resolvedTasks);
-    if(!settings.serverUrl) {
+
+    const serverUrl =
+      import.meta.env.VITE_MODE === "web"
+        ? "http://localhost:3010/calendar"
+        : settings.serverUrl;
+
+    if (!serverUrl) {
       console.error("Server URL is not set.");
       return;
     }
 
     try {
-      await ofetch(settings.serverUrl, {
+      await ofetch(serverUrl, {
         method: "POST",
         body: { tasks: resolvedTasks },
       });
