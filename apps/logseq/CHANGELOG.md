@@ -1,3 +1,11 @@
+# [1.7.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.6.0...v1.7.0) (2024-09-11)
+
+
+### Features
+
+* Add "build" script to package.json for building the plugin and web versions ([16a8d89](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/16a8d897367b8b28e9a6d60f3cd776298091ecbf))
+* Update variable name to reflect change from 'todos' to 'tasks' ([2e0b84c](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/2e0b84c12648e2d96abb665a8381e62e8f09f534))
+
 # [1.6.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.5.0...v1.6.0) (2024-09-11)
 
 
