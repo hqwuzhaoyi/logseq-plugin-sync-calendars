@@ -1,3 +1,15 @@
+# [1.6.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.5.0...v1.6.0) (2024-09-11)
+
+
+### Features
+
+* Add CalDAV sync functionality ([17636d1](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/17636d170fbfbb83ed927e72da5191b02dac920a))
+* Add sync-calendar package and update CalDAV sync functionality ([2bb8bd8](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/2bb8bd8019c906db3bf954f35a148f4eb47e42ee))
+* add syncCalendar package ([c82334a](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/c82334acced60bf2225f8d029abacf8f9e192479))
+* Update CalDAV sync functionality ([e02b0ec](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/e02b0ec19f339a48731da0f6474fc89f8026c9cc))
+* Update devDependencies in syncCalendar package ([2d1be69](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/2d1be69de24544fd76157d29af97a23399cba022))
+* Update server URL for calendar sync ([204de1d](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/204de1d9109a4eb9114c80262983a6db9fa6d49e))
+
 # [1.5.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.4.0...v1.5.0) (2024-08-31)
 
 
