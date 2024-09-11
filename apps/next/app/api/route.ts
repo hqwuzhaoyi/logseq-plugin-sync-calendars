@@ -4,7 +4,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     console.log("body", body);
-    const logseqTodos: LogeseqTodo[] = body.todos;
+    const logseqTodos: LogeseqTodo[] = body.tasks;
     await syncCalendar(logseqTodos);
     return new Response("Successfully created events in calendar.", {
       status: 200,
