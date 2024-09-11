@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite --mode web",
     "build:plugin": "tsc && vite build --mode plugin",
+    "build": "tsc && vite build --mode plugin",
     "build:web": "tsc && vite build --mode web",
     "preview": "vite preview",
     "release": "echo $GH_TOKEN && npx semantic-release"
