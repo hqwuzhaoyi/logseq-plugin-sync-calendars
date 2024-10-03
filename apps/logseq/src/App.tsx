@@ -60,12 +60,18 @@ const mapTodo = async (todo) => {
     scheduledTime = dayjs().valueOf();
   }
 
+  /**
+   * 获取日历的 uid
+   */
+  const calendarUid = block.properties?.calendarUid || null;
+
   return {
     text,
     scheduledTimeText,
     uid: block.uuid,
     isAllDay,
     scheduledTime,
+    calendarUid,
   };
 };
 
@@ -89,6 +95,15 @@ const App = () => {
     setTodo(resolvedTasks);
   };
 
+  // Function to add/update the calendar UID in the task block after sync
+  const addCalendarUid = async (blockId, newCalendarUid) => {
+    await logseq.Editor.upsertBlockProperty(
+      blockId,
+      "calendarUid",
+      newCalendarUid
+    );
+  };
+
   const handleSyncTodo = async () => {
     const todo = await getTodayTodo();
 
@@ -110,10 +125,19 @@ const App = () => {
     }
 
     try {
-      await ofetch(serverUrl, {
+      const syncResults = await ofetch(serverUrl, {
         method: "POST",
         body: { tasks: resolvedTasks },
       });
+
+      for (const task of resolvedTasks) {
+        const syncResult = syncResults.find((res) => res.id === task.blockId);
+        if (syncResult && syncResult.calendarUid) {
+          // 如果服务端返回了 `calendarUid`，说明任务已同步，更新任务块的 `calendarUid`
+          await addCalendarUid(task.blockId, syncResult.calendarUid);
+        }
+      }
+
       console.log("Tasks successfully sent to backend for synchronization.");
     } catch (error) {
       console.error("Error sending tasks to backend:", error);
