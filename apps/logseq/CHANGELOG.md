@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.7.0...v1.8.0) (2024-10-03)
+
+
+### Features
+
+* 添加同步后更新任务块的日历 UID 功能 ([c6e16e5](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/c6e16e567e2e82245c40efeface149269d358ef8))
+
 # [1.7.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.6.0...v1.7.0) (2024-09-11)
 
 
