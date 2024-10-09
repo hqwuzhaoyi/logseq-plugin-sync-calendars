@@ -5,6 +5,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import { ofetch } from "ofetch";
 import { settingsState } from "./state/settings";
 import { useRecoilValue } from "recoil";
+// TODO: 同步TODO到日历，增加删除和选择同步功能
 
 dayjs.extend(customParseFormat);
 
