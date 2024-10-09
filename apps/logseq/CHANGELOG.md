@@ -1,3 +1,11 @@
+# [1.9.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.8.0...v1.9.0) (2024-10-09)
+
+
+### Features
+
+* 同步TODO到日历，增加删除和选择同步功能 ([2657282](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/2657282998b0b1ad791420f83aaa0aae6a6aad31))
+* 添加依赖关系到dev环境 ([329f61d](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/commit/329f61dcbf18d62236170d3caff562e34e2b100d))
+
 # [1.8.0](https://github.com/hqwuzhaoyi/logseq-plugin-sync-calendars/compare/v1.7.0...v1.8.0) (2024-10-03)
 
 
