@@ -12,6 +12,67 @@ import { useRecoilValue } from "recoil";
 
 dayjs.extend(customParseFormat);
 
+const getAllTodo = async () => {
+  const todoBlocks = await logseq.DB.datascriptQuery(`
+    [:find (pull ?b [*])
+      :where
+      (or
+        [?b :block/marker "TODO"]
+        [?b :block/marker "SCHEDULED"])
+      [?b :block/page ?p]
+      [?p :block/journal? true]]
+  `);
+
+
+
+  // Map each block to an object that includes the type (TODO or SCHEDULED)
+  const result = todoBlocks.map(([block]) => {
+    const marker = block.marker;
+    return {
+      ...block,
+      todoType: marker === "TODO" ? "TODO" : "SCHEDULED",
+    };
+  });
+
+  return result;
+};
+
+const categorizeAndSortTodos = async () => {
+  const allTodos = await getAllTodo();
+
+  // Initialize a date-based dictionary to store categorized todos
+  const categorizedTodos = allTodos.reduce((acc, todo) => {
+    const scheduledMatch = todo.content.match(/SCHEDULED:\s*<([^>]+)>/);
+    const dateStr = scheduledMatch
+      ? dayjs(scheduledMatch[1], "YYYYMMDD").format("YYYY-MM-DD")
+      : "No Date";
+
+    if (!acc[dateStr]) {
+      acc[dateStr] = [];
+    }
+
+    acc[dateStr].push(todo);
+
+    return acc;
+  }, {});
+
+  // Sort each category by scheduled time
+  Object.keys(categorizedTodos).forEach((date) => {
+    categorizedTodos[date] = categorizedTodos[date].sort((a, b) => {
+      const aScheduled = a.scheduled || 0;
+      const bScheduled = b.scheduled || 0;
+      return aScheduled - bScheduled;
+    });
+  });
+
+  return categorizedTodos;
+};
+
+const displayCategorizedTodos = async () => {
+  const sortedTodos = await categorizeAndSortTodos();
+  console.log(sortedTodos);
+};
+
 const getTodayTodo = async () => {
   const today = dayjs().format("YYYYMMDD");
   // TODO: shceduledTime 标签不正确
@@ -174,9 +235,21 @@ const App = () => {
 
         <button
           className="mt-6 bg-white text-black px-4 py-2 rounded"
+          onClick={getAllTodo}
+        >
+          Get All Todo
+        </button>
+        <button
+          className="mt-6 bg-white text-black px-4 py-2 rounded"
+          onClick={displayCategorizedTodos}
+        >
+          Categorized Todos
+        </button>
+        <button
+          className="mt-6 bg-white text-black px-4 py-2 rounded"
           onClick={handleGetTodo}
         >
-          Get Todo
+          Get Today Todo
         </button>
         <button
           className="mt-6 bg-white text-black px-4 py-2 rounded"
