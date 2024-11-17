@@ -23,16 +23,33 @@ const getAllTodo = async () => {
       [?p :block/journal? true]]
   `);
 
-
-
-  // Map each block to an object that includes the type (TODO or SCHEDULED)
-  const result = todoBlocks.map(([block]) => {
+  const result =  await Promise.all(todoBlocks.map(async ([block]) => {
     const marker = block.marker;
+    const scheduledMatch = block.content.match(/SCHEDULED:\s*<([^>]+)>/);
+
+    let dateStr: string | null = null;
+    if (scheduledMatch) {
+      // 如果任务有 SCHEDULED 日期，使用它
+      dateStr = dayjs(scheduledMatch[1], "YYYYMMDD").format("YYYY-MM-DD");
+    } else {
+      // 否则通过页面 ID 获取日期
+      const page = await logseq.DB.datascriptQuery(`
+        [:find ?journalDay .
+         :where
+         [?p :db/id ${block.page.id}]
+         [?p :block/journal-day ?journalDay]]
+      `);
+      if (page) {
+        dateStr = dayjs(page, "YYYYMMDD").format("YYYY-MM-DD");
+      }
+    }
+
     return {
       ...block,
-      todoType: marker === "TODO" ? "TODO" : "SCHEDULED",
+      type: marker === "TODO" ? "TODO" : "SCHEDULED",
+      date: dateStr || "No Date", // 用于后续分类
     };
-  });
+  }));
 
   return result;
 };
