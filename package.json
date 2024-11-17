@@ -21,5 +21,8 @@
     "dotenv-cli": "^7.3.0",
     "turbo": "^2.0.9",
     "typescript": "^5.5.4"
+  },
+  "volta": {
+    "node": "20.18.0"
   }
 }
