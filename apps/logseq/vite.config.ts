@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 import { existsSync } from "fs";
-
+import path from "path";
 import packageJSON from "./package.json";
 
 const getMockSettings = (isWeb = false) => {
@@ -18,6 +18,11 @@ export default defineConfig(async ({ command, mode }) => {
   return {
     plugins: [react()],
     base: "./",
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+    },
     build: {
       target: "esnext",
     },

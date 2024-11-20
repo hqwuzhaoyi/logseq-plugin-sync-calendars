@@ -5,6 +5,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import { ofetch } from "ofetch";
 import { settingsState } from "./state/settings";
 import { useRecoilValue } from "recoil";
+import { Button } from "@/components/ui/button";
 // TODO: 同步TODO到日历，增加删除和选择同步功能
 // TODO: 勾选需要同步的TODO
 // 支持更多标签 TODO SCHEDULED DEADLINE LATER NOW
@@ -24,33 +25,35 @@ const getAllTodo = async () => {
       [?p :block/journal? true]]
   `);
 
-  const result =  await Promise.all(todoBlocks.map(async ([block]) => {
-    const marker = block.marker;
-    const scheduledMatch = block.content.match(/SCHEDULED:\s*<([^>]+)>/);
+  const result = await Promise.all(
+    todoBlocks.map(async ([block]) => {
+      const marker = block.marker;
+      const scheduledMatch = block.content.match(/SCHEDULED:\s*<([^>]+)>/);
 
-    let dateStr: string | null = null;
-    if (scheduledMatch) {
-      // 如果任务有 SCHEDULED 日期，使用它
-      dateStr = dayjs(scheduledMatch[1], "YYYYMMDD").format("YYYY-MM-DD");
-    } else {
-      // 否则通过页面 ID 获取日期
-      const page = await logseq.DB.datascriptQuery(`
+      let dateStr: string | null = null;
+      if (scheduledMatch) {
+        // 如果任务有 SCHEDULED 日期，使用它
+        dateStr = dayjs(scheduledMatch[1], "YYYYMMDD").format("YYYY-MM-DD");
+      } else {
+        // 否则通过页面 ID 获取日期
+        const page = await logseq.DB.datascriptQuery(`
         [:find ?journalDay .
          :where
          [?p :db/id ${block.page.id}]
          [?p :block/journal-day ?journalDay]]
       `);
-      if (page) {
-        dateStr = dayjs(page, "YYYYMMDD").format("YYYY-MM-DD");
+        if (page) {
+          dateStr = dayjs(page, "YYYYMMDD").format("YYYY-MM-DD");
+        }
       }
-    }
 
-    return {
-      ...block,
-      type: marker === "TODO" ? "TODO" : "SCHEDULED",
-      date: dateStr || "No Date", // 用于后续分类
-    };
-  }));
+      return {
+        ...block,
+        type: marker === "TODO" ? "TODO" : "SCHEDULED",
+        date: dateStr || "No Date", // 用于后续分类
+      };
+    })
+  );
 
   return result;
 };
@@ -251,30 +254,25 @@ const App = () => {
           ))}
         </ul>
 
-        <button
-          className="mt-6 bg-white text-black px-4 py-2 rounded"
-          onClick={getAllTodo}
-        >
-          Get All Todo
-        </button>
-        <button
+        <Button onClick={getAllTodo}>Get All Todo</Button>
+        <Button
           className="mt-6 bg-white text-black px-4 py-2 rounded"
           onClick={displayCategorizedTodos}
         >
           Categorized Todos
-        </button>
-        <button
+        </Button>
+        <Button
           className="mt-6 bg-white text-black px-4 py-2 rounded"
           onClick={handleGetTodo}
         >
           Get Today Todo
-        </button>
-        <button
+        </Button>
+        <Button
           className="mt-6 bg-white text-black px-4 py-2 rounded"
           onClick={handleSyncTodo}
         >
           Sync
-        </button>
+        </Button>
       </div>
     </div>
   );
