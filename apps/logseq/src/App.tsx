@@ -6,6 +6,51 @@ import { ofetch } from "ofetch";
 import { settingsState } from "./state/settings";
 import { useRecoilValue } from "recoil";
 import { Button } from "@/components/ui/button";
+import { Label } from "./components/ui/label";
+
+type LogseqTodo = {
+  properties: Record<string, any>;
+  scheduled?: number; // Optional, as not all items have a scheduled date
+  parent: {
+    id: number;
+  };
+  id: number;
+  uuid: string;
+  "path-refs": {
+    id: number;
+  }[];
+  content: string;
+  "journal?": boolean;
+  marker: string; // Assuming this is always "TODO"
+  page: {
+    id: number;
+  };
+  left: {
+    id: number;
+  };
+  format: string; // Assuming this is always "markdown"
+  refs: {
+    id: number;
+  }[];
+  type: string; // Assuming this is always "TODO"
+  date: string; // Date in string format, e.g., "No Date" or "2024-08-28"
+  "journal-day"?: number; // Optional, as it is not in all items
+};
+
+type TodoItemType = {
+  id: number;
+  uuid: string;
+  uid: string;
+  text: string;
+  content: string;
+  isAllDay: boolean;
+  date: string;
+  scheduledTimeText: string;
+  scheduledTime: number;
+  calendarUid: string | null;
+  type: "TODO" | "SCHEDULED";
+};
+
 // TODO: 同步TODO到日历，增加删除和选择同步功能
 // TODO: 勾选需要同步的TODO
 // 支持更多标签 TODO SCHEDULED DEADLINE LATER NOW
@@ -14,8 +59,62 @@ import { Button } from "@/components/ui/button";
 
 dayjs.extend(customParseFormat);
 
-const getAllTodo = async () => {
-  const todoBlocks = await logseq.DB.datascriptQuery(`
+const handleLogseqMapItem = async ([block]) => {
+  const marker = block.marker;
+  const scheduledMatch = block.content.match(/SCHEDULED:\s*<([^>]+)>/);
+  const content = block.content; // 获取块的内容
+  const text = content
+    .replace(/^TODO\s*/, "")
+    .replace(/SCHEDULED:.*$/, "")
+    .trim();
+  let scheduledTimeText;
+  let isAllDay = false;
+  let scheduledTime;
+
+  if (scheduledMatch) {
+    const dateString = scheduledMatch[1];
+
+    if (dateString.length === 14) {
+      // 如果日期格式为 YYYYMMDD
+      scheduledTimeText = dayjs(dateString, "YYYY-MM-DD").format(
+        "YYYY-MM-DDTHH:mm:ss"
+      );
+      scheduledTime = block.scheduled;
+      isAllDay = true; // 没有时间信息，则为全天事件
+    } else if (dateString.length > 14) {
+      // 如果日期格式包含时间
+      scheduledTimeText = dayjs(dateString, "YYYY-MM-DD HH:mm").format(
+        "YYYY-MM-DDTHH:mm:ss"
+      );
+      scheduledTime = dayjs(dateString, "YYYY-MM-DD HH:mm").valueOf();
+      isAllDay = scheduledTimeText.endsWith("00:00:00"); // 如果时间部分为00:00:00，则为全天事件
+    }
+  } else {
+    scheduledTimeText = dayjs().format("YYYY-MM-DDTHH:mm:ss");
+    scheduledTime = dayjs().valueOf();
+  }
+
+  /**
+   * 获取日历的 uid
+   */
+  const calendarUid = block.properties?.calendarUid || null;
+
+  return {
+    ...block,
+    calendarUid,
+    type: marker === "TODO" ? "TODO" : "SCHEDULED",
+  };
+};
+
+const handleLogseqToList:
+  | ((todoBlocks: [LogseqTodo][]) => Promise<TodoItemType[]>)
+  | undefined = async (todoBlocks) => {
+  const result = await Promise.all(todoBlocks.map(handleLogseqMapItem));
+  return result;
+};
+
+const getAllTodoList = async (): Promise<TodoItemType[]> => {
+  const todoBlocks = await logseq.DB.datascriptQuery<[LogseqTodo][]>(`
     [:find (pull ?b [*])
       :where
       (or
@@ -25,41 +124,13 @@ const getAllTodo = async () => {
       [?p :block/journal? true]]
   `);
 
-  const result = await Promise.all(
-    todoBlocks.map(async ([block]) => {
-      const marker = block.marker;
-      const scheduledMatch = block.content.match(/SCHEDULED:\s*<([^>]+)>/);
-
-      let dateStr: string | null = null;
-      if (scheduledMatch) {
-        // 如果任务有 SCHEDULED 日期，使用它
-        dateStr = dayjs(scheduledMatch[1], "YYYYMMDD").format("YYYY-MM-DD");
-      } else {
-        // 否则通过页面 ID 获取日期
-        const page = await logseq.DB.datascriptQuery(`
-        [:find ?journalDay .
-         :where
-         [?p :db/id ${block.page.id}]
-         [?p :block/journal-day ?journalDay]]
-      `);
-        if (page) {
-          dateStr = dayjs(page, "YYYYMMDD").format("YYYY-MM-DD");
-        }
-      }
-
-      return {
-        ...block,
-        type: marker === "TODO" ? "TODO" : "SCHEDULED",
-        date: dateStr || "No Date", // 用于后续分类
-      };
-    })
-  );
+  const result = await handleLogseqToList(todoBlocks);
 
   return result;
 };
 
 const categorizeAndSortTodos = async () => {
-  const allTodos = await getAllTodo();
+  const allTodos = await getAllTodoList();
 
   // Initialize a date-based dictionary to store categorized todos
   const categorizedTodos = allTodos.reduce((acc, todo) => {
@@ -96,8 +167,8 @@ const displayCategorizedTodos = async () => {
 
 const getTodayTodo = async () => {
   const today = dayjs().format("YYYYMMDD");
-  // TODO: shceduledTime 标签不正确
-  const todo = await logseq.DB.datascriptQuery(`
+
+  const todo = await logseq.DB.datascriptQuery<[LogseqTodo][]>(`
  [:find (pull ?b [*])
        :where
        (or
@@ -110,75 +181,40 @@ const getTodayTodo = async () => {
   return todo;
 };
 
-const mapTodo = async (todo) => {
-  const block = todo[0]; // 获取第一个块对象
-  const content = block.content; // 获取块的内容
-  const text = content
-    .replace(/^TODO\s*/, "")
-    .replace(/SCHEDULED:.*$/, "")
-    .trim();
-
-  const scheduledMatch = content.match(/SCHEDULED:\s*<([^>]+)>/);
-  let scheduledTimeText;
-  let isAllDay = false;
-  let scheduledTime;
-
-  if (scheduledMatch) {
-    const dateString = scheduledMatch[1];
-
-    if (dateString.length === 14) {
-      // 如果日期格式为 YYYYMMDD
-      scheduledTimeText = dayjs(dateString, "YYYY-MM-DD").format(
-        "YYYY-MM-DDTHH:mm:ss"
-      );
-      scheduledTime = block.scheduled;
-      isAllDay = true; // 没有时间信息，则为全天事件
-    } else if (dateString.length > 14) {
-      // 如果日期格式包含时间
-      scheduledTimeText = dayjs(dateString, "YYYY-MM-DD HH:mm").format(
-        "YYYY-MM-DDTHH:mm:ss"
-      );
-      scheduledTime = dayjs(dateString, "YYYY-MM-DD HH:mm").valueOf();
-      isAllDay = scheduledTimeText.endsWith("00:00:00"); // 如果时间部分为00:00:00，则为全天事件
-    }
-  } else {
-    scheduledTimeText = dayjs().format("YYYY-MM-DDTHH:mm:ss");
-    scheduledTime = dayjs().valueOf();
-  }
-
-  /**
-   * 获取日历的 uid
-   */
-  const calendarUid = block.properties?.calendarUid || null;
-
-  return {
-    text,
-    scheduledTimeText,
-    uid: block.uuid,
-    isAllDay,
-    scheduledTime,
-    calendarUid,
-  };
+const TodoList = ({ todos }: { todos: TodoItemType[] }) => {
+  return todos.map((todo) => (
+    <a
+      href="#"
+      key={todo.id}
+      className="flex flex-col items-start gap-2 whitespace-nowrap border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+    >
+      <div className="flex w-full items-center gap-2">
+        <span className="flex items-center gap-2">
+          <Label>Text</Label>
+          {todo.content}
+        </span>{" "}
+        <span className="ml-auto text-xs">{todo.date}</span>
+      </div>
+      <span className="font-medium">{todo.isAllDay ? "All Day" : ""}</span>
+      <span className="font-medium">{todo.scheduledTime}</span>
+      <span className="line-clamp-2 w-[260px] whitespace-break-spaces text-xs">
+        {todo.scheduledTimeText}
+      </span>
+    </a>
+  ));
 };
 
 const App = () => {
-  const [todo, setTodo] = useState<
-    {
-      text: string;
-      scheduledTime: string;
-      isAllDay: boolean;
-      scheduledTimeText: string;
-    }[]
-  >([]);
+  const [todoList, setTodoList] = useState<TodoItemType[]>([]);
   const settings = useRecoilValue(settingsState);
 
   console.log("settings", settings);
 
-  const handleGetTodo = async () => {
+  const handleGetTodayTodo = async () => {
     const todo = await getTodayTodo();
-    const tasks = todo.map(mapTodo);
+    const tasks = todo.map(handleLogseqMapItem);
     const resolvedTasks = await Promise.all(tasks);
-    setTodo(resolvedTasks);
+    setTodoList(resolvedTasks);
   };
 
   // Function to add/update the calendar UID in the task block after sync
@@ -193,10 +229,10 @@ const App = () => {
   const handleSyncTodo = async () => {
     const todo = await getTodayTodo();
 
-    const tasks = todo.map(mapTodo);
+    const tasks = todo.map(handleLogseqMapItem);
 
     const resolvedTasks = await Promise.all(tasks);
-    setTodo(resolvedTasks);
+    setTodoList(resolvedTasks);
 
     console.log(resolvedTasks);
 
@@ -217,10 +253,10 @@ const App = () => {
       });
 
       for (const task of resolvedTasks) {
-        const syncResult = syncResults.find((res) => res.id === task.blockId);
+        const syncResult = syncResults.find((res) => res.id === task.id);
         if (syncResult && syncResult.calendarUid) {
           // 如果服务端返回了 `calendarUid`，说明任务已同步，更新任务块的 `calendarUid`
-          await addCalendarUid(task.blockId, syncResult.calendarUid);
+          await addCalendarUid(task.id, syncResult.calendarUid);
         }
       }
 
@@ -243,36 +279,41 @@ const App = () => {
         </h2> */}
 
         <h2 className="text-2xl mt-6">Todos:</h2>
-        <ul>
-          {todo.map((todo, index) => (
-            <li key={index}>
-              <div>text: {todo.text}</div>
-              <div>isAllDay: {todo.isAllDay ? "All Day" : ""}</div>
-              <div>scheduledTime: {todo.scheduledTime}</div>
-              <div>scheduledTimeText: {todo.scheduledTimeText}</div>
-            </li>
-          ))}
-        </ul>
+        <div className="grid gap-4">
+          <Button
+            className="inline-flex items-center justify-center w-full  gap-4"
+            onClick={async () => {
+              const todoList = await getAllTodoList();
 
-        <Button onClick={getAllTodo}>Get All Todo</Button>
-        <Button
-          className="mt-6 bg-white text-black px-4 py-2 rounded"
-          onClick={displayCategorizedTodos}
-        >
-          Categorized Todos
-        </Button>
-        <Button
-          className="mt-6 bg-white text-black px-4 py-2 rounded"
-          onClick={handleGetTodo}
-        >
-          Get Today Todo
-        </Button>
-        <Button
-          className="mt-6 bg-white text-black px-4 py-2 rounded"
-          onClick={handleSyncTodo}
-        >
-          Sync
-        </Button>
+              setTodoList(todoList);
+            }}
+          >
+            Get All Todo
+          </Button>
+          <Button
+            className="inline-flex items-center justify-center w-full  gap-4"
+            onClick={handleGetTodayTodo}
+          >
+            Get Today Todo
+          </Button>
+          <Button
+            className="inline-flex items-center justify-center w-full  gap-4"
+            onClick={displayCategorizedTodos}
+          >
+            Categorized Todos
+          </Button>
+
+          <Button
+            className="inline-flex items-center justify-center w-full  gap-4"
+            onClick={handleSyncTodo}
+          >
+            Sync
+          </Button>
+
+          <div className="grid gap-4 overflow-y-auto scrollbar-hide max-h-[240px]">
+            <TodoList todos={todoList} />
+          </div>
+        </div>
       </div>
     </div>
   );
