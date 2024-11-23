@@ -1,8 +1,13 @@
 {
   "extends": "@repo/typescript-config/base.json",
-  "include": ["."],
-  "exclude": ["node_modules"],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "esnext"],
+    "outDir": "dist", // 输出目录
+    "rootDir": "src", // 定义项目的根目录
+    "strict": true, // 启用严格模式（可选）
+    "esModuleInterop": true, // 支持ES模块互操作性（可选）
+    "skipLibCheck": true // 跳过库的类型检查（可选）
   }
 }
