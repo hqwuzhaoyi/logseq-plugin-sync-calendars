@@ -59,56 +59,68 @@ type TodoItemType = {
 
 dayjs.extend(customParseFormat);
 
-const handleLogseqMapItem = async ([block]) => {
-  const marker = block.marker;
-  const scheduledMatch = block.content.match(/SCHEDULED:\s*<([^>]+)>/);
-  const content = block.content; // 获取块的内容
-  const text = content
-    .replace(/^TODO\s*/, "")
-    .replace(/SCHEDULED:.*$/, "")
-    .trim();
-  let scheduledTimeText;
-  let isAllDay = false;
-  let scheduledTime;
+const curryHandleLogseqMapItem =
+  (defaultDay?: string) =>
+  async ([block]) => {
+    const marker = block.marker;
+    const scheduledMatch = block.content.match(/SCHEDULED:\s*<([^>]+)>/);
+    const content = block.content; // 获取块的内容
+    const text = content
+      .replace(/^TODO\s*/, "")
+      .replace(/SCHEDULED:.*$/, "")
+      .trim();
+    let scheduledTimeText;
+    let isAllDay = false;
+    let scheduledTime;
 
-  if (scheduledMatch) {
-    const dateString = scheduledMatch[1];
+    if (scheduledMatch) {
+      const dateString = scheduledMatch[1];
 
-    if (dateString.length === 14) {
-      // 如果日期格式为 YYYYMMDD
-      scheduledTimeText = dayjs(dateString, "YYYY-MM-DD").format(
-        "YYYY-MM-DDTHH:mm:ss"
-      );
-      scheduledTime = block.scheduled;
-      isAllDay = true; // 没有时间信息，则为全天事件
-    } else if (dateString.length > 14) {
-      // 如果日期格式包含时间
-      scheduledTimeText = dayjs(dateString, "YYYY-MM-DD HH:mm").format(
-        "YYYY-MM-DDTHH:mm:ss"
-      );
-      scheduledTime = dayjs(dateString, "YYYY-MM-DD HH:mm").valueOf();
-      isAllDay = scheduledTimeText.endsWith("00:00:00"); // 如果时间部分为00:00:00，则为全天事件
+      if (dateString.length === 14) {
+        // 如果日期格式为 YYYYMMDD
+        scheduledTimeText = dayjs(dateString, "YYYY-MM-DD").format(
+          "YYYY-MM-DDTHH:mm:ss"
+        );
+        scheduledTime = dayjs(dateString, "YYYYMMDD").valueOf();
+        isAllDay = true; // 没有时间信息，则为全天事件
+      } else if (dateString.length > 14) {
+        // 如果日期格式包含时间
+        scheduledTimeText = dayjs(dateString, "YYYY-MM-DD HH:mm").format(
+          "YYYY-MM-DDTHH:mm:ss"
+        );
+        scheduledTime = dayjs(dateString, "YYYY-MM-DD HH:mm").valueOf();
+        isAllDay = scheduledTimeText.endsWith("00:00:00"); // 如果时间部分为00:00:00，则为全天事件
+      }
+    } else if (defaultDay) {
+      scheduledTimeText = dayjs(defaultDay).format("YYYY-MM-DDTHH:mm:ss");
+      scheduledTime = dayjs(defaultDay).valueOf();
+      isAllDay = true;
+    } else {
+      scheduledTimeText = "No Date";
+      scheduledTime = 0;
+      isAllDay = false;
     }
-  } else {
-    scheduledTimeText = dayjs().format("YYYY-MM-DDTHH:mm:ss");
-    scheduledTime = dayjs().valueOf();
-  }
 
-  /**
-   * 获取日历的 uid
-   */
-  const calendarUid = block.properties?.calendarUid || null;
+    /**
+     * 获取日历的 uid
+     */
+    const calendarUid = block.properties?.calendarUid || null;
 
-  return {
-    ...block,
-    calendarUid,
-    type: marker === "TODO" ? "TODO" : "SCHEDULED",
+    return {
+      ...block,
+      calendarUid,
+      type: marker === "TODO" ? "TODO" : "SCHEDULED",
+      isAllDay,
+      scheduledTime,
+      scheduledTimeText,
+      text,
+    };
   };
-};
 
 const handleLogseqToList:
   | ((todoBlocks: [LogseqTodo][]) => Promise<TodoItemType[]>)
   | undefined = async (todoBlocks) => {
+  const handleLogseqMapItem = curryHandleLogseqMapItem();
   const result = await Promise.all(todoBlocks.map(handleLogseqMapItem));
   return result;
 };
@@ -196,10 +208,11 @@ const TodoList = ({ todos }: { todos: TodoItemType[] }) => {
         <span className="ml-auto text-xs">{todo.date}</span>
       </div>
       <span className="font-medium">{todo.isAllDay ? "All Day" : ""}</span>
+      <span className="font-medium">{todo.scheduledTimeText}</span>
       <span className="font-medium">{todo.scheduledTime}</span>
-      <span className="line-clamp-2 w-[260px] whitespace-break-spaces text-xs">
+      {/* <span className="line-clamp-2 w-[260px] whitespace-break-spaces text-xs">
         {todo.scheduledTimeText}
-      </span>
+      </span> */}
     </a>
   ));
 };
@@ -212,6 +225,7 @@ const App = () => {
 
   const handleGetTodayTodo = async () => {
     const todo = await getTodayTodo();
+    const handleLogseqMapItem = curryHandleLogseqMapItem(dayjs().format());
     const tasks = todo.map(handleLogseqMapItem);
     const resolvedTasks = await Promise.all(tasks);
     setTodoList(resolvedTasks);
@@ -228,7 +242,7 @@ const App = () => {
 
   const handleSyncTodo = async () => {
     const todo = await getTodayTodo();
-
+    const handleLogseqMapItem = curryHandleLogseqMapItem(dayjs().format());
     const tasks = todo.map(handleLogseqMapItem);
 
     const resolvedTasks = await Promise.all(tasks);
