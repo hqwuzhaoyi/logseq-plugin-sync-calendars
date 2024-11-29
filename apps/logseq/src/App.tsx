@@ -8,6 +8,7 @@ import { useRecoilValue } from "recoil";
 import { Button } from "@/components/ui/button";
 import { Label } from "./components/ui/label";
 
+
 type LogseqTodo = {
   properties: Record<string, any>;
   scheduled?: number; // Optional, as not all items have a scheduled date
@@ -54,10 +55,32 @@ type TodoItemType = {
 // TODO: 同步TODO到日历，增加删除和选择同步功能
 // TODO: 勾选需要同步的TODO
 // 支持更多标签 TODO SCHEDULED DEADLINE LATER NOW
-// 支持更多时间格式 YYYY-MM-DD HH:mm
-// 支持修改日历
+// TODO: 同步时间不由文字记录，由插件选择日期
 
 dayjs.extend(customParseFormat);
+
+const findParentDate = async (parentId) => {
+  if (!parentId) return null;
+
+  let parentBlock = await logseq.Editor.getBlock(parentId, {includeChildren: true});
+  while (parentBlock) {
+    const parentContent = parentBlock.content;
+    const journalDayMatch = parentContent.match(/\d{8}/); // 匹配 8 位日期，例如 20240813
+    if (journalDayMatch) {
+      const journalDay = journalDayMatch[0];
+      return {
+        scheduledTimeText: dayjs(journalDay, "YYYYMMDD").format(
+          "YYYY-MM-DDTHH:mm:ss"
+        ),
+        scheduledTime: dayjs(journalDay, "YYYYMMDD").valueOf(),
+        isAllDay: true,
+      };
+    }
+    if (!parentBlock.parent?.id) break; // 如果没有父块，退出循环
+    parentBlock = await logseq.Editor.getBlock(parentBlock.parent.id, {includeChildren: true}); // 获取上一级父块
+  }
+  return null;
+};
 
 const curryHandleLogseqMapItem =
   (defaultDay?: string) =>
@@ -96,9 +119,25 @@ const curryHandleLogseqMapItem =
       scheduledTime = dayjs(defaultDay).valueOf();
       isAllDay = true;
     } else {
-      scheduledTimeText = "No Date";
-      scheduledTime = 0;
-      isAllDay = false;
+      // TODO: 从logseq向上查找日期
+      const parentDate = await findParentDate(block.parent?.id);
+      if (parentDate) {
+        scheduledTimeText = parentDate.scheduledTimeText;
+        scheduledTime = parentDate.scheduledTime;
+        isAllDay = parentDate.isAllDay;
+      } else if (block["journal-day"]) {
+        // 如果块直接有 journal-day 属性，使用它
+        const journalDay = block["journal-day"];
+        scheduledTimeText = dayjs(journalDay, "YYYYMMDD").format(
+          "YYYY-MM-DDTHH:mm:ss"
+        );
+        scheduledTime = dayjs(journalDay, "YYYYMMDD").valueOf();
+        isAllDay = true;
+      } else {
+        scheduledTimeText = "No Date";
+        scheduledTime = 0;
+        isAllDay = false;
+      }
     }
 
     /**
