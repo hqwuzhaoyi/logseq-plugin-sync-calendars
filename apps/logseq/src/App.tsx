@@ -8,7 +8,6 @@ import { useRecoilValue } from "recoil";
 import { Button } from "@/components/ui/button";
 import { Label } from "./components/ui/label";
 
-
 type LogseqTodo = {
   properties: Record<string, any>;
   scheduled?: number; // Optional, as not all items have a scheduled date
@@ -62,7 +61,9 @@ dayjs.extend(customParseFormat);
 const findParentDate = async (parentId) => {
   if (!parentId) return null;
 
-  let parentBlock = await logseq.Editor.getBlock(parentId, {includeChildren: true});
+  const parentBlock = await logseq.Editor.getBlock(parentId, {
+    includeChildren: true,
+  });
   while (parentBlock) {
     const parentContent = parentBlock.content;
     const journalDayMatch = parentContent.match(/\d{8}/); // 匹配 8 位日期，例如 20240813
@@ -77,8 +78,37 @@ const findParentDate = async (parentId) => {
       };
     }
     if (!parentBlock.parent?.id) break; // 如果没有父块，退出循环
-    parentBlock = await logseq.Editor.getBlock(parentBlock.parent.id, {includeChildren: true}); // 获取上一级父块
+    const page = await logseq.Editor.getPage(parentBlock.parent.id, {
+      includeChildren: true,
+    }); // 获取上一级父块
+
+    if (page) {
+      return {
+        scheduledTimeText: dayjs(page.journalDay + "", "YYYYMMDD").format(
+          "YYYY-MM-DDTHH:mm:ss"
+        ),
+        scheduledTime: dayjs(page.journalDay + "", "YYYYMMDD").valueOf(),
+        isAllDay: true,
+      };
+    }
   }
+
+  if (!parentBlock) {
+    const page = await logseq.Editor.getPage(parentId, {
+      includeChildren: true,
+    }); // 获取上一级父块
+
+    if (page) {
+      return {
+        scheduledTimeText: dayjs(page.journalDay + "", "YYYYMMDD").format(
+          "YYYY-MM-DDTHH:mm:ss"
+        ),
+        scheduledTime: dayjs(page.journalDay + "", "YYYYMMDD").valueOf(),
+        isAllDay: true,
+      };
+    }
+  }
+
   return null;
 };
 
