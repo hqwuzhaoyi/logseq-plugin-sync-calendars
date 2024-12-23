@@ -7,6 +7,7 @@ import { settingsState } from "./state/settings";
 import { useRecoilValue } from "recoil";
 import { Button } from "@/components/ui/button";
 import { Label } from "./components/ui/label";
+import { TodoTable } from "./components/TodoTable";
 
 type LogseqTodo = {
   properties: Record<string, any>;
@@ -396,6 +397,7 @@ const App = () => {
           <div className="grid gap-4 overflow-y-auto scrollbar-hide max-h-[240px]">
             <TodoList todos={todoList} />
           </div>
+          <TodoTable />
         </div>
       </div>
     </div>
