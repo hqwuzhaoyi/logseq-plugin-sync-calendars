@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "./components/ui/label";
 import { TodoTable } from "./components/TodoTable";
 import { ErrorAlert, ErrorAlertProps } from "./components/ErrorAlert";
+import { handleError } from "@/lib/errorHandler";
 
 type LogseqTodo = {
   properties: Record<string, any>;
@@ -262,20 +263,6 @@ const getTodayTodo = async () => {
        [?p :block/journal-day ${today}]]
   `);
   return todo;
-};
-
-const handleError = (error: unknown, setError: (message: ErrorAlertProps["message"]) => void) => {
-  if (error instanceof Error) {
-    setError({
-      content: error.message,
-      duration: 30000,
-    });
-  } else {
-    setError({
-      content: "An unknown error occurred",
-      duration: 30000,
-    });
-  }
 };
 
 const TodoList = ({ todos }: { todos: TodoItemType[] }) => {
