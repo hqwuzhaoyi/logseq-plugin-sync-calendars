@@ -1,5 +1,5 @@
 export type LogseqTodo = {
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
   scheduled?: number; // Optional, as not all items have a scheduled date
   parent: {
     id: number;
