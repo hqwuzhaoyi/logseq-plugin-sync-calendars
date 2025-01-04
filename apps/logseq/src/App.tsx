@@ -6,53 +6,11 @@ import { ofetch } from "ofetch";
 import { settingsState } from "./state/settings";
 import { useRecoilValue } from "recoil";
 import { Button } from "@/components/ui/button";
-import { Label } from "./components/ui/label";
 import { TodoTable } from "./components/TodoTable";
 import { ErrorAlert, ErrorAlertProps } from "./components/ErrorAlert";
 import { handleError } from "@/lib/errorHandler";
-
-type LogseqTodo = {
-  properties: Record<string, any>;
-  scheduled?: number; // Optional, as not all items have a scheduled date
-  parent: {
-    id: number;
-  };
-  id: number;
-  uuid: string;
-  "path-refs": {
-    id: number;
-  }[];
-  content: string;
-  "journal?": boolean;
-  marker: string; // Assuming this is always "TODO"
-  page: {
-    id: number;
-  };
-  left: {
-    id: number;
-  };
-  format: string; // Assuming this is always "markdown"
-  refs: {
-    id: number;
-  }[];
-  type: string; // Assuming this is always "TODO"
-  date: string; // Date in string format, e.g., "No Date" or "2024-08-28"
-  "journal-day"?: number; // Optional, as it is not in all items
-};
-
-type TodoItemType = {
-  id: number;
-  uuid: string;
-  uid: string;
-  text: string;
-  content: string;
-  isAllDay: boolean;
-  date: string;
-  scheduledTimeText: string;
-  scheduledTime: number;
-  calendarUid: string | null;
-  type: "TODO" | "SCHEDULED";
-};
+import { TodoList } from "./components/TodoList";
+import type { TodoItemType, LogseqTodo } from "./types";
 
 // TODO: 同步TODO到日历，增加删除和选择同步功能
 // TODO: 勾选需要同步的TODO
@@ -263,30 +221,6 @@ const getTodayTodo = async () => {
        [?p :block/journal-day ${today}]]
   `);
   return todo;
-};
-
-const TodoList = ({ todos }: { todos: TodoItemType[] }) => {
-  return todos.map((todo) => (
-    <a
-      href="#"
-      key={todo.id}
-      className="flex flex-col items-start gap-2 whitespace-nowrap border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-    >
-      <div className="flex w-full items-center gap-2">
-        <span className="flex items-center gap-2">
-          <Label>Text</Label>
-          {todo.content}
-        </span>{" "}
-        <span className="ml-auto text-xs">{todo.date}</span>
-      </div>
-      <span className="font-medium">{todo.isAllDay ? "All Day" : ""}</span>
-      <span className="font-medium">{todo.scheduledTimeText}</span>
-      <span className="font-medium">{todo.scheduledTime}</span>
-      {/* <span className="line-clamp-2 w-[260px] whitespace-break-spaces text-xs">
-        {todo.scheduledTimeText}
-      </span> */}
-    </a>
-  ));
 };
 
 const App = () => {
