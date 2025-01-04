@@ -8,6 +8,7 @@ import { useRecoilValue } from "recoil";
 import { Button } from "@/components/ui/button";
 import { Label } from "./components/ui/label";
 import { TodoTable } from "./components/TodoTable";
+import { ErrorAlert, ErrorAlertProps } from "./components/ErrorAlert";
 
 type LogseqTodo = {
   properties: Record<string, any>;
@@ -197,14 +198,14 @@ const handleLogseqToList:
 
 const getAllTodoList = async (): Promise<TodoItemType[]> => {
   const todoBlocks = await logseq.DB.datascriptQuery<[LogseqTodo][]>(`
-    [:find (pull ?b [*])
-      :where
-      (or
-        [?b :block/marker "TODO"]
-        [?b :block/marker "SCHEDULED"])
-      [?b :block/page ?p]
-      [?p :block/journal? true]]
-  `);
+      [:find (pull ?b [*])
+        :where
+        (or
+          [?b :block/marker "TODO"]
+          [?b :block/marker "SCHEDULED"])
+        [?b :block/page ?p]
+        [?p :block/journal? true]]
+    `);
 
   const result = await handleLogseqToList(todoBlocks);
 
@@ -263,6 +264,20 @@ const getTodayTodo = async () => {
   return todo;
 };
 
+const handleError = (error: unknown, setError: (message: ErrorAlertProps["message"]) => void) => {
+  if (error instanceof Error) {
+    setError({
+      content: error.message,
+      duration: 30000,
+    });
+  } else {
+    setError({
+      content: "An unknown error occurred",
+      duration: 30000,
+    });
+  }
+};
+
 const TodoList = ({ todos }: { todos: TodoItemType[] }) => {
   return todos.map((todo) => (
     <a
@@ -291,14 +306,20 @@ const App = () => {
   const [todoList, setTodoList] = useState<TodoItemType[]>([]);
   const settings = useRecoilValue(settingsState);
 
+  const [error, setError] = useState<ErrorAlertProps["message"]>();
+
   console.log("settings", settings);
 
   const handleGetTodayTodo = async () => {
-    const todo = await getTodayTodo();
-    const handleLogseqMapItem = curryHandleLogseqMapItem(dayjs().format());
-    const tasks = todo.map(handleLogseqMapItem);
-    const resolvedTasks = await Promise.all(tasks);
-    setTodoList(resolvedTasks);
+    try {
+      const todo = await getTodayTodo();
+      const handleLogseqMapItem = curryHandleLogseqMapItem(dayjs().format());
+      const tasks = todo.map(handleLogseqMapItem);
+      const resolvedTasks = await Promise.all(tasks);
+      setTodoList(resolvedTasks);
+    } catch (error: unknown) {
+      handleError(error, setError);
+    }
   };
 
   // Function to add/update the calendar UID in the task block after sync
@@ -362,14 +383,20 @@ const App = () => {
           Current Env: {import.meta.env.VITE_MODE}
         </h2> */}
 
+        {error && <ErrorAlert message={error} />}
+
         <h2 className="text-2xl mt-6">Todos:</h2>
         <div className="grid gap-4">
           <Button
             className="inline-flex items-center justify-center w-full  gap-4"
             onClick={async () => {
-              const todoList = await getAllTodoList();
+              try {
+                const todoList = await getAllTodoList();
 
-              setTodoList(todoList);
+                setTodoList(todoList);
+              } catch (error) {
+                handleError(error, setError);
+              }
             }}
           >
             Get All Todo
